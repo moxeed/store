@@ -1,0 +1,10 @@
+{
+  "databaseDsn": "sqlserver://sa:1qaz@WSX@localhost:1433?database=Store",
+  "listenPort": 8091,
+  "title": "store",
+  "schemes": [
+    "http"
+  ],
+  "host": "localhost:8082",
+  "basePath": ""
+}
