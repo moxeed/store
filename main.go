@@ -15,7 +15,13 @@ func main() {
 
 	order := router.Group("/order")
 	order.GET("", controller.GetOrder)
+	order.GET("/basket", controller.GetBasket)
 	order.POST("", controller.AddItem)
+	order.POST("/pay", controller.LockForPayment)
+
+	payment := router.Group("/payment")
+	payment.GET("/terminal", controller.OpenTerminal)
+	payment.GET("/verify*", controller.Verify)
 
 	err := router.Start(fmt.Sprintf("localhost:%d", common.Configuration.ListenPort))
 

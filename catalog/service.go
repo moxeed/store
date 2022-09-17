@@ -1,6 +1,7 @@
 package catalog
 
 import (
+	"fmt"
 	"github.com/moxeed/store/common"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
@@ -54,10 +55,15 @@ func CreateProduct(model CreateProductModel) ProductModel {
 	return product.ToModel()
 }
 
-func GetProduct(id uint) Product {
+func GetProduct(id uint) (Product, error) {
 	product := Product{}
-	common.DB.Preload(clause.Associations).Find(&product, id)
-	return product
+	dbResult := common.DB.Preload(clause.Associations).First(&product, id)
+
+	if dbResult.Error == gorm.ErrRecordNotFound {
+		return product, fmt.Errorf("محصول پیدا نشد")
+	}
+
+	return product, nil
 }
 
 func GetProductCallBacks(productIds []uint) map[uint]CallBackModel {

@@ -1,7 +1,6 @@
 package ordering
 
 import (
-	"fmt"
 	"github.com/moxeed/store/catalog"
 	"github.com/moxeed/store/common"
 	"github.com/moxeed/store/payment"
@@ -23,7 +22,7 @@ type Order struct {
 	UserCode     uint
 	CustomerCode uint
 	LastState    int
-	Items        []OrderItem
+	Items        []*OrderItem
 	States       []OrderState
 }
 
@@ -31,6 +30,8 @@ type OrderItem struct {
 	gorm.Model
 	ProductCode   uint
 	ReferenceCode uint
+	ProductTitle  string
+	Category      string
 	Price         uint
 	Quantity      uint
 	LastState     int
@@ -71,9 +72,12 @@ func NewOrder(userCode uint, customerCode uint) Order {
 	return order
 }
 
-func (o *Order) addItem(productCode uint, referenceCode uint, quantity uint) {
-	product := catalog.GetProduct(productCode)
-	item := OrderItem{
+func (o *Order) addItem(productCode uint, referenceCode uint, quantity uint) (err error) {
+	product, err := catalog.GetProduct(productCode)
+
+	item := &OrderItem{
+		ProductTitle:  product.Title,
+		Category:      product.Category.Key,
 		ProductCode:   productCode,
 		ReferenceCode: referenceCode,
 		Price:         product.Price,
@@ -84,33 +88,40 @@ func (o *Order) addItem(productCode uint, referenceCode uint, quantity uint) {
 	item.setState(Basket)
 
 	o.Items = append(o.Items, item)
+
+	return
 }
 
 func (o *Order) lockForPayment() bool {
 	isOk := o.validate()
 
 	if isOk {
-		payment.CreatePayment(o.CustomerCode, o.ID, o.TotalAmount())
+
 		o.setState(PaymentPending)
 		for _, item := range o.Items {
 			item.setState(PaymentPending)
 		}
+
+		payment.CreatePayment(o.CustomerCode, o.ID, o.TotalAmount())
 	}
 
 	return isOk
 }
 
-func (o *Order) checkOut() error {
-	isPaid := payment.IsPaid(o.ID)
+func (o *Order) checkOut() {
+	inquiry := payment.IsPaid(o.ID)
 
-	if !isPaid {
-		return fmt.Errorf("پرداخت انجام نشده است")
+	if !inquiry.DoesExists {
+		payment.CreatePayment(o.CustomerCode, o.ID, o.TotalAmount())
+		return
+	}
+
+	if !inquiry.IsPaid {
+		return
 	}
 
 	o.setState(Paid)
 	o.dispatchCheckout()
-
-	return nil
 }
 
 func (o *Order) TotalAmount() uint {

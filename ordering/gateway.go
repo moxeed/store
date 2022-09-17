@@ -10,9 +10,9 @@ type ErrorModel struct {
 	Error         string
 }
 
-func getProductCodes(items *[]OrderItem) []uint {
-	var result []uint
-	for _, item := range *items {
+func getProductCodes(items []*OrderItem) []uint {
+	result := make([]uint, 0)
+	for _, item := range items {
 		result = append(result, item.ProductCode)
 	}
 
@@ -20,7 +20,7 @@ func getProductCodes(items *[]OrderItem) []uint {
 }
 
 func (o *Order) getProductCodes() []uint {
-	return getProductCodes(&o.Items)
+	return getProductCodes(o.Items)
 }
 
 func (o *Order) validate() bool {
@@ -32,15 +32,15 @@ func (o *Order) validate() bool {
 	for _, item := range o.Items {
 		callBack := callBacks[item.ProductCode].ValidationCallBack
 		calls[callBack] = append(calls[callBack], item.ReferenceCode)
-		items[item.ReferenceCode] = &item
+		items[item.ReferenceCode] = item
 	}
 
-	var errors []ErrorModel
+	errors := make([]ErrorModel, 0)
 
 	for callBack, referenceCodes := range calls {
-		var result []ErrorModel
-		isSuccess := common.Post(callBack, referenceCodes, &result)
-		if isSuccess {
+		result := make([]ErrorModel, 0)
+		state := common.Post(callBack, referenceCodes, &result)
+		if !state.IsOk {
 			errors = append(errors, result...)
 		}
 
@@ -52,9 +52,9 @@ func (o *Order) validate() bool {
 	return len(errors) == 0
 }
 
-func dispatchCheckout(orderItems *[]OrderItem) bool {
-	if len(*orderItems) == 0 {
-		return true
+func dispatchCheckout(orderItems []*OrderItem) {
+	if len(orderItems) == 0 {
+		return
 	}
 
 	productCodes := getProductCodes(orderItems)
@@ -63,34 +63,26 @@ func dispatchCheckout(orderItems *[]OrderItem) bool {
 	calls := make(map[string][]uint)
 	items := make(map[uint]*OrderItem)
 
-	for _, item := range *orderItems {
+	for _, item := range orderItems {
 		callBack := callBacks[item.ProductCode].CheckOutCallBack
 		calls[callBack] = append(calls[callBack], item.ReferenceCode)
-		items[item.ReferenceCode] = &item
+		items[item.ReferenceCode] = item
 	}
 
-	var errors []ErrorModel
-
 	for callBack, referenceCodes := range calls {
-		var result []ErrorModel
-		isOk := common.Post(callBack, referenceCodes, &result)
-
-		if isOk {
-			errors = append(errors, result...)
-		}
+		result := make([]ErrorModel, 0)
+		state := common.Post(callBack, referenceCodes, &result)
 
 		for _, code := range referenceCodes {
-			if isOk {
-				items[code].checkOut(&result)
-			} else {
+			if state.IsAmbiguous {
 				items[code].failedToProcess()
+			} else {
+				items[code].checkOut(&result)
 			}
 		}
 	}
-
-	return len(errors) == 0
 }
 
-func (o *Order) dispatchCheckout() bool {
-	return dispatchCheckout(&o.Items)
+func (o *Order) dispatchCheckout() {
+	dispatchCheckout(o.Items)
 }

@@ -1,8 +1,11 @@
 package ordering
 
 import (
+	"fmt"
 	"github.com/moxeed/store/common"
+	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
+	"log"
 	"time"
 )
 
@@ -25,6 +28,8 @@ type OrderModel struct {
 
 type OrderItemModel struct {
 	ID             uint
+	ProductTitle   string
+	Category       string
 	ProductCode    uint
 	Price          uint
 	Quantity       uint
@@ -42,30 +47,84 @@ type AddItemModel struct {
 	Quantity      uint
 }
 
-type GetOrderModel struct {
-	ID           *uint `query:"id"`
-	UserCode     uint  `query:"userCode"`
-	CustomerCode uint  `query:"customerCode"`
-}
+func getBasket(customerCode uint) (Order, error) {
+	order := Order{CustomerCode: customerCode, LastState: Basket}
+	dbResult := common.DB.
+		Preload("Items").
+		Preload("States").
+		Preload("Items.States").
+		Preload("Items.Errors").
+		Where(&order).First(&order)
 
-func GetOrder(model GetOrderModel) OrderModel {
-	order := NewOrder(model.UserCode, model.CustomerCode)
-
-	if model.ID != nil {
-		common.DB.Preload(clause.Associations).Find(&order, model.ID)
-	} else {
-		common.DB.Preload(clause.Associations).Where(&order).Find(&order)
+	if dbResult.Error == gorm.ErrRecordNotFound {
+		return order, fmt.Errorf("سبد پیدا نشد")
 	}
-	return order.ToModel()
+
+	return order, nil
 }
 
-func AddItem(model AddItemModel) OrderModel {
+func GetBasket(customerCode uint) (OrderModel, error) {
+	order, err := getBasket(customerCode)
+	return order.toModel(), err
+}
+
+func getOrder(ID uint) (Order, error) {
+	order := Order{}
+	dbResult := common.DB.
+		Preload("Items").
+		Preload("States").
+		Preload("Items.States").
+		Preload("Items.Errors").
+		First(&order, ID)
+
+	if dbResult.Error == gorm.ErrRecordNotFound {
+		return order, fmt.Errorf("سفارش پیدا نشد")
+	}
+
+	return order, nil
+}
+
+func GetOrder(ID uint) (OrderModel, error) {
+	order, err := getOrder(ID)
+	return order.toModel(), err
+}
+
+func AddItem(model AddItemModel) (orderModel OrderModel, err error) {
 	order := NewOrder(model.UserCode, model.CustomerCode)
 	common.DB.Preload(clause.Associations).Where(&order).Find(&order)
 
-	order.addItem(model.ProductCode, model.ReferenceCode, model.Quantity)
+	err = order.addItem(model.ProductCode, model.ReferenceCode, model.Quantity)
 	common.DB.Save(&order)
-	return order.ToModel()
+
+	orderModel = order.toModel()
+	return
+}
+
+func LockForPayment(customerCode uint) (OrderModel, error) {
+	order, err := getBasket(customerCode)
+
+	if err != nil {
+		return order.toModel(), err
+	}
+
+	order.lockForPayment()
+	save(&order)
+	return order.toModel(), nil
+}
+
+func CheckOut(orderID uint) {
+	order, err := getOrder(orderID)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	order.checkOut()
+	save(&order)
+}
+
+func save(order *Order) {
+	common.DB.Session(&gorm.Session{FullSaveAssociations: true}).Save(&order)
 }
 
 func stateText(state int) string {
@@ -117,6 +176,8 @@ func (oi *OrderItem) toModel() OrderItemModel {
 
 	return OrderItemModel{
 		ID:             oi.ID,
+		ProductTitle:   oi.ProductTitle,
+		Category:       oi.Category,
 		ProductCode:    oi.ProductCode,
 		Price:          oi.Price,
 		Quantity:       oi.Quantity,
@@ -127,7 +188,7 @@ func (oi *OrderItem) toModel() OrderItemModel {
 	}
 }
 
-func (o *Order) ToModel() OrderModel {
+func (o *Order) toModel() OrderModel {
 	var items []OrderItemModel
 	var states []StateModel
 
@@ -149,4 +210,14 @@ func (o *Order) ToModel() OrderModel {
 		States:         states,
 		CreatedAt:      o.CreatedAt,
 	}
+}
+
+type PaymentListener struct{}
+
+func (PaymentListener) Handle(completed common.PaymentCompleted) {
+	CheckOut(completed.OrderCode)
+}
+
+func init() {
+	common.Register(PaymentListener{})
 }

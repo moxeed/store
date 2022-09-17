@@ -1,6 +1,6 @@
 package common
 
 type Error struct {
-	Status int
-	Error  string
+	Status  int
+	Message string
 }
