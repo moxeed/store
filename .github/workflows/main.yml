@@ -23,8 +23,29 @@ jobs:
       
     - name: Copy Config
       run: cp ./config.json ./build/
-      
-    - name: Upload a Build Artifact
-      uses: actions/upload-artifact@v3.1.0
+    - name: Zip build
+      run: tar -a -c -f store.win.zip ./build
+    - name: Get current date
+      id: date
+      run: echo "::set-output name=date::$(date +'%Y-%m-%d')"
+    - name: release
+      uses: actions/create-release@v1
+      id: create_release
       with:
-        path: ./build
+        draft: false
+        prerelease: false
+        release_name: ${{ steps.date.outputs.date }}
+        tag_name: ${{ github.ref }}
+        body_path: CHANGELOG.md
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+    - name: upload linux artifact
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./store.win.zip
+        asset_name: store.win.zip
+        asset_content_type: application/gzip
+    
