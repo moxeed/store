@@ -94,7 +94,7 @@ func verify(authority string, amount int) VerifyResult {
 		Authority:  authority,
 	}
 	result := VerifyResponse{}
-	state := common.Post(config.BaseUrl+config.RequestRelativePath, request, &result)
+	state := common.Post(config.BaseUrl+config.VerifyRelativePath, request, &result)
 
 	if state.IsOk {
 		return VerifyResult{

@@ -102,6 +102,11 @@ func (o *Order) lockForPayment() bool {
 			item.setState(PaymentPending)
 		}
 
+		if o.TotalAmount() == 0 {
+			o.setState(Paid)
+			o.dispatchCheckout()
+			return true
+		}
 		payment.CreatePayment(o.CustomerCode, o.ID, o.TotalAmount())
 	}
 
