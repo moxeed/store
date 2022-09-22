@@ -94,13 +94,16 @@ func (o *Order) addItem(productCode uint, referenceCode uint, quantity uint) (er
 	return
 }
 
-func (o *Order) lockForPayment() (bool, bool) {
+func (o *Order) lockForPayment() bool {
 	isOk := o.validate()
 
-	if o.TotalAmount() == 0 {
-		o.setState(Paid)
-		o.dispatchCheckout()
-		return true, true
+	if o.LastState != Basket {
+		return isOk
+	}
+
+	if o.IsFree() {
+		o.checkOut()
+		return true
 	}
 
 	if isOk {
@@ -113,19 +116,21 @@ func (o *Order) lockForPayment() (bool, bool) {
 		payment.CreatePayment(o.CustomerCode, o.ID, o.TotalAmount())
 	}
 
-	return isOk, false
+	return isOk
 }
 
 func (o *Order) checkOut() {
-	inquiry := payment.IsPaid(o.ID)
+	if !o.IsFree() {
+		inquiry := payment.IsPaid(o.ID)
 
-	if !inquiry.DoesExists {
-		payment.CreatePayment(o.CustomerCode, o.ID, o.TotalAmount())
-		return
-	}
+		if !inquiry.DoesExists {
+			payment.CreatePayment(o.CustomerCode, o.ID, o.TotalAmount())
+			return
+		}
 
-	if !inquiry.IsPaid {
-		return
+		if !inquiry.IsPaid {
+			return
+		}
 	}
 
 	o.setState(Paid)

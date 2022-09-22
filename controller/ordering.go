@@ -80,12 +80,16 @@ func AddItem(c echo.Context) (err error) {
 	return
 }
 
-func FlashBuy(c echo.Context) (err error) {
-	model := ordering.FlashBuyModel{}
-	err = c.Bind(&model)
+func getPayment(order *ordering.OrderModel, isFree bool) (paymentModel PaymentModel, err error) {
+	paymentModel.Order = *order
 
-	result, err := ordering.FlashBuy(model)
-	err = common.WriteIfNoError(&c, err, result)
+	if !isFree {
+		var paymentResult string
+		paymentResult, err = payment.OpenTerminal(order.ID)
+
+		paymentModel.PaymentUrl = paymentResult
+	}
+
 	return
 }
 
@@ -98,14 +102,18 @@ func StartPayment(c echo.Context) (err error) {
 		ReferenceCode: model.ReferenceCode,
 	})
 
-	var paymentResult string
-	if err == nil && !isFree {
-		paymentResult, err = payment.OpenTerminal(result.ID)
-	}
+	factor, err := getPayment(&result, isFree)
+	err = common.WriteIfNoError(&c, err, factor)
+	return
+}
 
-	err = common.WriteIfNoError(&c, err, PaymentModel{
-		Order:      result,
-		PaymentUrl: paymentResult,
-	})
+func FlashBuy(c echo.Context) (err error) {
+	model := ordering.FlashBuyModel{}
+	err = c.Bind(&model)
+
+	result, isFree, err := ordering.FlashBuy(model)
+
+	factor, err := getPayment(&result, isFree)
+	err = common.WriteIfNoError(&c, err, factor)
 	return
 }

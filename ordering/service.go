@@ -152,46 +152,31 @@ func AddItem(model AddItemModel) (orderModel OrderModel, err error) {
 	return
 }
 
-func FlashBuy(model FlashBuyModel) (orderModel OrderModel, err error) {
-	order := NewOrder(model.UserCode, model.CustomerCode, &model.OrderReferenceCode)
-
-	err = order.addItem(model.ProductCode, model.ReferenceCode, model.Quantity)
-	order.lockForPayment()
-	common.DB.Save(&order)
-
-	orderModel = order.toModel()
-	return
-}
-
-func LockForPayment(order *Order) (OrderModel, bool, error) {
-	isOk, isFree := order.lockForPayment()
-	save(order)
-
-	if isOk {
-		return order.toModel(), isFree, nil
-	}
-	return order.toModel(), isFree, fmt.Errorf("امکان قفل کردن سفارش وجود ندارد")
-}
-
-func StartPayment(identifier OrderIdentifier) (OrderModel, bool, error) {
+func StartPayment(identifier OrderIdentifier) (orderModel OrderModel, isFree bool, err error) {
 	order, err := getOrderByIdentifier(identifier)
 
 	if err != nil {
 		return order.toModel(), false, err
 	}
 
-	if order.LastState == Basket {
-		return LockForPayment(&order)
-	}
-
-	if order.LastState != PaymentPending {
-		return order.toModel(), order.IsFree(), fmt.Errorf("سفارش قبلا پرداخت شده است")
-	}
-
+	order.lockForPayment()
+	save(&order)
 	return order.toModel(), order.IsFree(), nil
 }
 
-func GetOrderList(customerCode uint, offset int) ([]*OrderHeaderModel, int64) {
+func FlashBuy(model FlashBuyModel) (orderModel OrderModel, isFree bool, err error) {
+	order := NewOrder(model.UserCode, model.CustomerCode, &model.OrderReferenceCode)
+
+	err = order.addItem(model.ProductCode, model.ReferenceCode, model.Quantity)
+	order.lockForPayment()
+	save(&order)
+
+	isFree = order.IsFree()
+	orderModel = order.toModel()
+	return
+}
+
+func GetOrderList(customerCode uint, offset int) (result []*OrderHeaderModel, totalCount int64) {
 	orders := make([]*Order, 0)
 	common.DB.Where(&Order{CustomerCode: customerCode}).
 		Order("LastState asc, CreatedAt desc").
@@ -199,17 +184,14 @@ func GetOrderList(customerCode uint, offset int) ([]*OrderHeaderModel, int64) {
 		Limit(10).
 		Find(&orders)
 
-	var totalCount int64 = 0
 	common.DB.Where(&Order{CustomerCode: customerCode}).
 		Count(&totalCount)
-
-	result := make([]*OrderHeaderModel, 0)
 
 	for _, order := range orders {
 		result = append(result, order.toHeaderModel())
 	}
 
-	return result, totalCount
+	return
 }
 
 func CheckOut(orderID uint) {
