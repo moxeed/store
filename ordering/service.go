@@ -108,8 +108,12 @@ func FlashBuy(model ordering_model.FlashBuyModel) (orderModel ordering_model.Ord
 		return
 	}
 
-	order.lockForPayment()
+	isOk := order.lockForPayment()
 	save(&order)
+
+	if !isOk {
+		err = fmt.Errorf("وضعیت سبد معتبر نمی باشد")
+	}
 
 	isFree = order.IsFree()
 	orderModel = order.toModel()

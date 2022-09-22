@@ -40,6 +40,7 @@ func WriteIfNoError(c *echo.Context, err error, body interface{}) error {
 		err = (*c).JSON(400, Error{
 			Status:  400,
 			Message: err.Error(),
+			Body:    body,
 		})
 	}
 	return err
