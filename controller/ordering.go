@@ -8,7 +8,13 @@ import (
 )
 
 type GetOrderModel struct {
-	ID uint `query:"id"`
+	ID            *uint   `query:"id"`
+	ReferenceCode *string `query:"referenceCode"`
+}
+
+type GetOrderListModel struct {
+	CustomerCode uint `query:"customerCode"`
+	Offset       int  `query:"offset"`
 }
 
 type GetBasketModel struct {
@@ -28,8 +34,31 @@ func GetOrder(c echo.Context) (err error) {
 	model := GetOrderModel{}
 	err = c.Bind(&model)
 
-	result, err := ordering.GetOrder(model.ID)
+	result := ordering.OrderModel{}
+
+	result, err = ordering.GetOrder(ordering.OrderIdentifier{
+		ID:            model.ID,
+		ReferenceCode: model.ReferenceCode,
+	})
+
 	err = common.WriteIfNoError(&c, err, result)
+	return
+}
+
+func GetList(c echo.Context) (err error) {
+	model := GetOrderListModel{}
+	err = c.Bind(&model)
+
+	result, totalCount := ordering.GetOrderList(model.CustomerCode, model.Offset)
+
+	err = common.WriteIfNoError(&c, nil, struct {
+		Rows       []*ordering.OrderHeaderModel
+		TotalCount int64
+	}{
+		Rows:       result,
+		TotalCount: totalCount,
+	})
+
 	return
 }
 
@@ -51,11 +80,23 @@ func AddItem(c echo.Context) (err error) {
 	return
 }
 
-func LockForPayment(c echo.Context) (err error) {
-	model := LockBasketModel{}
+func FlashBuy(c echo.Context) (err error) {
+	model := ordering.FlashBuyModel{}
 	err = c.Bind(&model)
 
-	result, isFree, err := ordering.LockForPayment(model.CustomerCode)
+	result, err := ordering.FlashBuy(model)
+	err = common.WriteIfNoError(&c, err, result)
+	return
+}
+
+func StartPayment(c echo.Context) (err error) {
+	model := GetOrderModel{}
+	err = c.Bind(&model)
+
+	result, isFree, err := ordering.StartPayment(ordering.OrderIdentifier{
+		ID:            model.ID,
+		ReferenceCode: model.ReferenceCode,
+	})
 
 	var paymentResult string
 	if err == nil && !isFree {

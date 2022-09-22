@@ -1,5 +1,5 @@
 {
-  "databaseDsn": "sqlserver://Golang:UFy2fjDoUe9igCC2rnRv@37.130.202.59:1433?database=StoreDev",
+  "databaseDsn": "sqlserver://sa:1qaz@WSX@localhost:1433?database=Store",
   "listenPort": 8091,
   "title": "store",
   "schemes": [
@@ -17,8 +17,8 @@
     "authorization": "Bearer eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJhdWQiOiIxIiwianRpIjoiZTNhNmU0YmQ1MWE5YWEyNjEzOWU2MGQzMmU5ZDYyMzNlZDgyNDIzNjA3ZWZmYjk2ZTQ4OGI2NWYzNmQ2N2ZiNWJkZTc3ZGVjMGZjNWU1OTMiLCJpYXQiOjE2Mjk5NjUxODUuMzgwMjk2LCJuYmYiOjE2Mjk5NjUxODUuMzgwMywiZXhwIjoxNzg3NzMxNTg1LjE5NzI2OSwic3ViIjoiNzA2NzUzIiwic2NvcGVzIjpbXX0.jxeNjv0HYJhid1GKDb1DtStZKbbMZPMg0uzcLXkccHjK7iL1dCvF5KgRaNaiNQJKXLQzLVNKmT3pzyx3cLOQteUvDGDdPVbikVqWhB0W4sz2UmY7TyPCZyTLq7Zft0bp1Cs5p-uKHMNNQ1aZyk52F1D64VADDoFipG4z2vQlouCT6Ox29rspy4xSdmJf55-PX_1DywkFEZvsl3wZGwEy6N2dSRzmICUYcFjlEHmuKwhCEh8VLuy7fYF-HlLRSmLBMMt_drULzg5hFrhg3Ou3KsfQPtwwE81GMQuO0Yxm-i_zNUwlxRidmtTmsEhze56EEfcyPbE3_9UCAyWs4HQIYQmfsblmp7QxpG62q19WN5nwA_wOqpPs6ygrIsjj1BG_zbnn1JujLsMW6CLMZMWG9YaA58FE_SPk561qVRS6f1x48IdGD4AiQHxt748cKOZWvi0L7MMdo9RENyjCkR7u9WdLRDXiJfPP7zMeo8R1qZOfDxRY3j1ysEIYD7_OF5zEHNkhyIxEYtLPJyt0DgJkK6w8tpRhZvTYBGTUqLpiEwg7AI84aQRle4STjQv0ecZwPmA-RV_PAZnHNHO5n2mFsxIwNcRYRuZZxkNAxUy1jQ81ZHigaBaE-goQerLDlWAyxSWp8R1xorD_qmijPesVLDslix1KxLLwWDcSviNfFXs"
   },
   "job": {
-    "failedOrderRetryInMinutes": 1,
-    "openOrderRetryInMinutes": 1,
-    "openTerminalRetryInMinutes": 1
+    "failedOrderRetryInMinutes": 15,
+    "openOrderRetryInMinutes": 15,
+    "openTerminalRetryInMinutes": 15
   }
 }

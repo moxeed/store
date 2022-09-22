@@ -19,11 +19,12 @@ const (
 
 type Order struct {
 	gorm.Model
-	UserCode     uint
-	CustomerCode uint
-	LastState    int
-	Items        []*OrderItem
-	States       []OrderState
+	UserCode      uint
+	CustomerCode  uint
+	ReferenceCode *string
+	LastState     int
+	Items         []*OrderItem
+	States        []OrderState
 }
 
 type OrderItem struct {
@@ -61,10 +62,11 @@ type OrderState struct {
 	CreatedAt time.Time
 }
 
-func NewOrder(userCode uint, customerCode uint) Order {
+func NewOrder(userCode uint, customerCode uint, referenceCode *string) Order {
 	order := Order{
-		UserCode:     userCode,
-		CustomerCode: customerCode,
+		UserCode:      userCode,
+		CustomerCode:  customerCode,
+		ReferenceCode: referenceCode,
 	}
 
 	order.setState(Basket)
@@ -137,6 +139,10 @@ func (o *Order) TotalAmount() uint {
 	}
 
 	return totalAmount
+}
+
+func (o *Order) IsFree() bool {
+	return o.TotalAmount() == 0
 }
 
 func (o *Order) setState(state int) {

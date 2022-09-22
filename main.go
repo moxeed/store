@@ -15,9 +15,11 @@ func main() {
 
 	order := router.Group("/order")
 	order.GET("", controller.GetOrder)
+	order.GET("/list", controller.GetList)
 	order.GET("/basket", controller.GetBasket)
 	order.POST("", controller.AddItem)
-	order.POST("/pay", controller.LockForPayment)
+	order.POST("/flash", controller.FlashBuy)
+	order.POST("/pay", controller.StartPayment)
 
 	payment := router.Group("/payment")
 	payment.GET("/terminal", controller.OpenTerminal)

@@ -9,6 +9,11 @@ import (
 	"time"
 )
 
+type OrderIdentifier struct {
+	ID            *uint
+	ReferenceCode *string
+}
+
 type StateModel struct {
 	State      int
 	StateTitle string
@@ -21,7 +26,19 @@ type OrderModel struct {
 	CustomerCode   uint
 	LastState      int
 	LastStateTitle string
+	TotalAmount    uint
 	Items          []OrderItemModel
+	States         []StateModel
+	CreatedAt      time.Time
+}
+
+type OrderHeaderModel struct {
+	ID             uint
+	UserCode       uint
+	CustomerCode   uint
+	LastState      int
+	LastStateTitle string
+	TotalAmount    uint
 	States         []StateModel
 	CreatedAt      time.Time
 }
@@ -45,6 +62,15 @@ type AddItemModel struct {
 	ProductCode   uint
 	ReferenceCode uint
 	Quantity      uint
+}
+
+type FlashBuyModel struct {
+	UserCode           uint
+	CustomerCode       uint
+	ProductCode        uint
+	ReferenceCode      uint
+	Quantity           uint
+	OrderReferenceCode string
 }
 
 func getBasket(customerCode uint) (Order, error) {
@@ -84,13 +110,39 @@ func getOrder(ID uint) (Order, error) {
 	return order, nil
 }
 
-func GetOrder(ID uint) (OrderModel, error) {
-	order, err := getOrder(ID)
+func getOrderByIdentifier(identifier OrderIdentifier) (Order, error) {
+
+	order := Order{ReferenceCode: identifier.ReferenceCode}
+	if identifier.ID != nil {
+		order.ID = *identifier.ID
+	}
+
+	if identifier.ID == nil && identifier.ReferenceCode == nil {
+		return order, fmt.Errorf("سفارش پیدا نشد")
+	}
+
+	dbResult := common.DB.
+		Preload("Items").
+		Preload("States").
+		Preload("Items.States").
+		Preload("Items.Errors").
+		Where(&order).
+		First(&order)
+
+	if dbResult.Error == gorm.ErrRecordNotFound {
+		return order, fmt.Errorf("سفارش پیدا نشد")
+	}
+
+	return order, nil
+}
+
+func GetOrder(identifier OrderIdentifier) (OrderModel, error) {
+	order, err := getOrderByIdentifier(identifier)
 	return order.toModel(), err
 }
 
 func AddItem(model AddItemModel) (orderModel OrderModel, err error) {
-	order := NewOrder(model.UserCode, model.CustomerCode)
+	order := NewOrder(model.UserCode, model.CustomerCode, nil)
 	common.DB.Preload(clause.Associations).Where(&order).Find(&order)
 
 	err = order.addItem(model.ProductCode, model.ReferenceCode, model.Quantity)
@@ -100,20 +152,64 @@ func AddItem(model AddItemModel) (orderModel OrderModel, err error) {
 	return
 }
 
-func LockForPayment(customerCode uint) (OrderModel, bool, error) {
-	order, err := getBasket(customerCode)
+func FlashBuy(model FlashBuyModel) (orderModel OrderModel, err error) {
+	order := NewOrder(model.UserCode, model.CustomerCode, &model.OrderReferenceCode)
 
-	if err != nil {
-		return order.toModel(), false, err
-	}
+	err = order.addItem(model.ProductCode, model.ReferenceCode, model.Quantity)
+	order.lockForPayment()
+	common.DB.Save(&order)
 
+	orderModel = order.toModel()
+	return
+}
+
+func LockForPayment(order *Order) (OrderModel, bool, error) {
 	isOk, isFree := order.lockForPayment()
-	save(&order)
+	save(order)
 
 	if isOk {
 		return order.toModel(), isFree, nil
 	}
 	return order.toModel(), isFree, fmt.Errorf("امکان قفل کردن سفارش وجود ندارد")
+}
+
+func StartPayment(identifier OrderIdentifier) (OrderModel, bool, error) {
+	order, err := getOrderByIdentifier(identifier)
+
+	if err != nil {
+		return order.toModel(), false, err
+	}
+
+	if order.LastState == Basket {
+		return LockForPayment(&order)
+	}
+
+	if order.LastState != PaymentPending {
+		return order.toModel(), order.IsFree(), fmt.Errorf("سفارش قبلا پرداخت شده است")
+	}
+
+	return order.toModel(), order.IsFree(), nil
+}
+
+func GetOrderList(customerCode uint, offset int) ([]*OrderHeaderModel, int64) {
+	orders := make([]*Order, 0)
+	common.DB.Where(&Order{CustomerCode: customerCode}).
+		Order("LastState asc, CreatedAt desc").
+		Offset(offset).
+		Limit(10).
+		Find(&orders)
+
+	var totalCount int64 = 0
+	common.DB.Where(&Order{CustomerCode: customerCode}).
+		Count(&totalCount)
+
+	result := make([]*OrderHeaderModel, 0)
+
+	for _, order := range orders {
+		result = append(result, order.toHeaderModel())
+	}
+
+	return result, totalCount
 }
 
 func CheckOut(orderID uint) {
@@ -210,7 +306,27 @@ func (o *Order) toModel() OrderModel {
 		CustomerCode:   o.CustomerCode,
 		LastState:      o.LastState,
 		LastStateTitle: stateText(o.LastState),
+		TotalAmount:    o.TotalAmount(),
 		Items:          items,
+		States:         states,
+		CreatedAt:      o.CreatedAt,
+	}
+}
+
+func (o *Order) toHeaderModel() *OrderHeaderModel {
+	var states []StateModel
+
+	for _, state := range o.States {
+		states = append(states, state.toModel())
+	}
+
+	return &OrderHeaderModel{
+		ID:             o.ID,
+		UserCode:       o.UserCode,
+		CustomerCode:   o.CustomerCode,
+		LastState:      o.LastState,
+		LastStateTitle: stateText(o.LastState),
+		TotalAmount:    o.TotalAmount(),
 		States:         states,
 		CreatedAt:      o.CreatedAt,
 	}
