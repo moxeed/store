@@ -104,6 +104,10 @@ func FlashBuy(model ordering_model.FlashBuyModel) (orderModel ordering_model.Ord
 	order := NewOrder(model.UserCode, model.CustomerCode, &model.OrderReferenceCode)
 
 	err = order.addItem(model.ProductCode, model.ReferenceCode, model.Quantity)
+	if err != nil {
+		return
+	}
+
 	order.lockForPayment()
 	save(&order)
 
