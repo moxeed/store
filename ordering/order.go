@@ -107,12 +107,12 @@ func (o *Order) lockForPayment() bool {
 	}
 
 	if isOk {
-
 		o.setState(PaymentPending)
 		for _, item := range o.Items {
 			item.setState(PaymentPending)
 		}
 
+		save(o)
 		payment.CreatePayment(o.CustomerCode, o.ID, o.TotalAmount())
 	}
 
