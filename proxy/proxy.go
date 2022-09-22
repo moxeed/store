@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/moxeed/store/catalog/catalog_model"
 	"github.com/moxeed/store/common"
+	"github.com/moxeed/store/controller/controller_model"
 	"github.com/moxeed/store/ordering/ordering_model"
 	"github.com/sirupsen/logrus"
 )
@@ -11,7 +12,7 @@ import (
 func CreateProduct(model catalog_model.CreateProductModel) (*catalog_model.ProductModel, error) {
 	config := &common.Configuration.Store
 	result := &catalog_model.ProductModel{}
-	state := common.Post(config.BaseUrl+config.CreateProduct, model, &result)
+	state := common.Post(config.BaseUrl+config.CreateProduct, model, result)
 
 	if state.IsOk {
 		return result, nil
@@ -21,28 +22,28 @@ func CreateProduct(model catalog_model.CreateProductModel) (*catalog_model.Produ
 	return result, fmt.Errorf("خطا در ثبت محصول")
 }
 
-func AddItem(model ordering_model.AddItemModel) error {
+func AddItem(model ordering_model.AddItemModel) (*ordering_model.OrderModel, error) {
 	config := &common.Configuration.Store
-	result := make(map[string]interface{})
-	state := common.Post(config.BaseUrl+config.AddItem, model, &result)
+	result := &ordering_model.OrderModel{}
+	state := common.Post(config.BaseUrl+config.AddItem, model, result)
 
 	if state.IsOk {
-		return nil
+		return result, nil
 	}
 
 	logrus.Error("AddItem", model, result)
-	return fmt.Errorf("خطا در ثبت سفارش")
+	return result, fmt.Errorf("خطا در ثبت سفارش")
 }
 
-func FlashBuy(model ordering_model.FlashBuyModel) error {
+func FlashBuy(model ordering_model.FlashBuyModel) (*controller_model.PaymentModel, error) {
 	config := &common.Configuration.Store
-	result := make(map[string]interface{})
-	state := common.Post(config.BaseUrl+config.FlashBuy, model, &result)
+	result := &controller_model.PaymentModel{}
+	state := common.Post(config.BaseUrl+config.FlashBuy, model, result)
 
 	if state.IsOk {
-		return nil
+		return result, nil
 	}
 
 	logrus.Error("AddItem", model, result)
-	return fmt.Errorf("خطا در ثبت سفارش")
+	return result, fmt.Errorf("خطا در ثبت سفارش")
 }
