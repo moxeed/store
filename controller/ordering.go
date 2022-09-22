@@ -59,10 +59,10 @@ func AddItem(c echo.Context) (err error) {
 	return
 }
 
-func getPayment(order *ordering_model.OrderModel, isFree bool) (paymentModel controller_model.PaymentModel, err error) {
+func getPayment(order *ordering_model.OrderModel, isFree bool, prevError error) (paymentModel controller_model.PaymentModel, err error) {
 	paymentModel.Order = *order
 
-	if !isFree {
+	if !isFree && prevError == nil {
 		var paymentResult string
 		paymentResult, err = payment.OpenTerminal(order.ID)
 
@@ -81,7 +81,7 @@ func StartPayment(c echo.Context) (err error) {
 		ReferenceCode: model.ReferenceCode,
 	})
 
-	factor, err := getPayment(&result, isFree)
+	factor, err := getPayment(&result, isFree, err)
 	err = common.WriteIfNoError(&c, err, factor)
 	return
 }
@@ -92,7 +92,7 @@ func FlashBuy(c echo.Context) (err error) {
 
 	result, isFree, err := ordering.FlashBuy(model)
 
-	factor, err := getPayment(&result, isFree)
+	factor, err := getPayment(&result, isFree, err)
 	err = common.WriteIfNoError(&c, err, factor)
 	return
 }
