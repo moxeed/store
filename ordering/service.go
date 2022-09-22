@@ -3,75 +3,11 @@ package ordering
 import (
 	"fmt"
 	"github.com/moxeed/store/common"
+	"github.com/moxeed/store/ordering/ordering_model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 	"log"
-	"time"
 )
-
-type OrderIdentifier struct {
-	ID            *uint
-	ReferenceCode *string
-}
-
-type StateModel struct {
-	State      int
-	StateTitle string
-	CreatedAt  time.Time
-}
-
-type OrderModel struct {
-	ID             uint
-	UserCode       uint
-	CustomerCode   uint
-	LastState      int
-	LastStateTitle string
-	TotalAmount    uint
-	Items          []OrderItemModel
-	States         []StateModel
-	CreatedAt      time.Time
-}
-
-type OrderHeaderModel struct {
-	ID             uint
-	UserCode       uint
-	CustomerCode   uint
-	LastState      int
-	LastStateTitle string
-	TotalAmount    uint
-	States         []StateModel
-	CreatedAt      time.Time
-}
-
-type OrderItemModel struct {
-	ID             uint
-	ProductTitle   string
-	Category       string
-	ProductCode    uint
-	Price          uint
-	Quantity       uint
-	LastState      int
-	LastStateTitle string
-	Errors         []string
-	States         []StateModel
-}
-
-type AddItemModel struct {
-	UserCode      uint
-	CustomerCode  uint
-	ProductCode   uint
-	ReferenceCode uint
-	Quantity      uint
-}
-
-type FlashBuyModel struct {
-	UserCode           uint
-	CustomerCode       uint
-	ProductCode        uint
-	ReferenceCode      uint
-	Quantity           uint
-	OrderReferenceCode string
-}
 
 func getBasket(customerCode uint) (Order, error) {
 	order := Order{CustomerCode: customerCode, LastState: Basket}
@@ -89,7 +25,7 @@ func getBasket(customerCode uint) (Order, error) {
 	return order, nil
 }
 
-func GetBasket(customerCode uint) (OrderModel, error) {
+func GetBasket(customerCode uint) (ordering_model.OrderModel, error) {
 	order, err := getBasket(customerCode)
 	return order.toModel(), err
 }
@@ -110,7 +46,7 @@ func getOrder(ID uint) (Order, error) {
 	return order, nil
 }
 
-func getOrderByIdentifier(identifier OrderIdentifier) (Order, error) {
+func getOrderByIdentifier(identifier ordering_model.OrderIdentifier) (Order, error) {
 
 	order := Order{ReferenceCode: identifier.ReferenceCode}
 	if identifier.ID != nil {
@@ -136,12 +72,12 @@ func getOrderByIdentifier(identifier OrderIdentifier) (Order, error) {
 	return order, nil
 }
 
-func GetOrder(identifier OrderIdentifier) (OrderModel, error) {
+func GetOrder(identifier ordering_model.OrderIdentifier) (ordering_model.OrderModel, error) {
 	order, err := getOrderByIdentifier(identifier)
 	return order.toModel(), err
 }
 
-func AddItem(model AddItemModel) (orderModel OrderModel, err error) {
+func AddItem(model ordering_model.AddItemModel) (orderModel ordering_model.OrderModel, err error) {
 	order := NewOrder(model.UserCode, model.CustomerCode, nil)
 	common.DB.Preload(clause.Associations).Where(&order).Find(&order)
 
@@ -152,7 +88,7 @@ func AddItem(model AddItemModel) (orderModel OrderModel, err error) {
 	return
 }
 
-func StartPayment(identifier OrderIdentifier) (orderModel OrderModel, isFree bool, err error) {
+func StartPayment(identifier ordering_model.OrderIdentifier) (orderModel ordering_model.OrderModel, isFree bool, err error) {
 	order, err := getOrderByIdentifier(identifier)
 
 	if err != nil {
@@ -164,7 +100,7 @@ func StartPayment(identifier OrderIdentifier) (orderModel OrderModel, isFree boo
 	return order.toModel(), order.IsFree(), nil
 }
 
-func FlashBuy(model FlashBuyModel) (orderModel OrderModel, isFree bool, err error) {
+func FlashBuy(model ordering_model.FlashBuyModel) (orderModel ordering_model.OrderModel, isFree bool, err error) {
 	order := NewOrder(model.UserCode, model.CustomerCode, &model.OrderReferenceCode)
 
 	err = order.addItem(model.ProductCode, model.ReferenceCode, model.Quantity)
@@ -176,7 +112,7 @@ func FlashBuy(model FlashBuyModel) (orderModel OrderModel, isFree bool, err erro
 	return
 }
 
-func GetOrderList(customerCode uint, offset int) (result []*OrderHeaderModel, totalCount int64) {
+func GetOrderList(customerCode uint, offset int) (result []*ordering_model.OrderHeaderModel, totalCount int64) {
 	orders := make([]*Order, 0)
 	common.DB.Where(&Order{CustomerCode: customerCode}).
 		Order("LastState asc, CreatedAt desc").
@@ -228,25 +164,25 @@ func stateText(state int) string {
 	}
 }
 
-func (os *OrderState) toModel() StateModel {
-	return StateModel{
+func (os *OrderState) toModel() ordering_model.StateModel {
+	return ordering_model.StateModel{
 		State:      os.State,
 		StateTitle: stateText(os.State),
 		CreatedAt:  os.CreatedAt,
 	}
 }
 
-func (ois *OrderItemState) toModel() StateModel {
-	return StateModel{
+func (ois *OrderItemState) toModel() ordering_model.StateModel {
+	return ordering_model.StateModel{
 		State:      ois.State,
 		StateTitle: stateText(ois.State),
 		CreatedAt:  ois.CreatedAt,
 	}
 }
 
-func (oi *OrderItem) toModel() OrderItemModel {
+func (oi *OrderItem) toModel() ordering_model.OrderItemModel {
 	var errors []string
-	var states []StateModel
+	var states []ordering_model.StateModel
 
 	for _, e := range oi.Errors {
 		errors = append(errors, e.Error)
@@ -256,7 +192,7 @@ func (oi *OrderItem) toModel() OrderItemModel {
 		states = append(states, s.toModel())
 	}
 
-	return OrderItemModel{
+	return ordering_model.OrderItemModel{
 		ID:             oi.ID,
 		ProductTitle:   oi.ProductTitle,
 		Category:       oi.Category,
@@ -270,9 +206,9 @@ func (oi *OrderItem) toModel() OrderItemModel {
 	}
 }
 
-func (o *Order) toModel() OrderModel {
-	var items []OrderItemModel
-	var states []StateModel
+func (o *Order) toModel() ordering_model.OrderModel {
+	var items []ordering_model.OrderItemModel
+	var states []ordering_model.StateModel
 
 	for _, item := range o.Items {
 		items = append(items, item.toModel())
@@ -282,7 +218,7 @@ func (o *Order) toModel() OrderModel {
 		states = append(states, state.toModel())
 	}
 
-	return OrderModel{
+	return ordering_model.OrderModel{
 		ID:             o.ID,
 		UserCode:       o.UserCode,
 		CustomerCode:   o.CustomerCode,
@@ -295,14 +231,14 @@ func (o *Order) toModel() OrderModel {
 	}
 }
 
-func (o *Order) toHeaderModel() *OrderHeaderModel {
-	var states []StateModel
+func (o *Order) toHeaderModel() *ordering_model.OrderHeaderModel {
+	var states []ordering_model.StateModel
 
 	for _, state := range o.States {
 		states = append(states, state.toModel())
 	}
 
-	return &OrderHeaderModel{
+	return &ordering_model.OrderHeaderModel{
 		ID:             o.ID,
 		UserCode:       o.UserCode,
 		CustomerCode:   o.CustomerCode,

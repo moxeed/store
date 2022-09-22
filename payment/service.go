@@ -3,14 +3,10 @@ package payment
 import (
 	"fmt"
 	"github.com/moxeed/store/common"
+	"github.com/moxeed/store/payment/payment_model"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
-
-type InquiryModel struct {
-	DoesExists bool
-	IsPaid     bool
-}
 
 func CreatePayment(customerCode uint, orderCode uint, amount uint) {
 	payment := NewOrderPayment(customerCode, orderCode, amount)
@@ -68,18 +64,18 @@ func Verify(terminalCode string) error {
 	return nil
 }
 
-func IsPaid(orderCode uint) InquiryModel {
+func IsPaid(orderCode uint) payment_model.InquiryModel {
 	orderPayment := OrderPayment{OrderCode: orderCode}
 	result := common.DB.Where(&orderPayment).First(&orderPayment)
 
 	if result.Error == gorm.ErrRecordNotFound {
-		return InquiryModel{
+		return payment_model.InquiryModel{
 			DoesExists: false,
 			IsPaid:     false,
 		}
 	}
 
-	return InquiryModel{
+	return payment_model.InquiryModel{
 		DoesExists: true,
 		IsPaid:     orderPayment.isPaid(),
 	}

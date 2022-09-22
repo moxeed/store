@@ -2,36 +2,13 @@ package catalog
 
 import (
 	"fmt"
+	"github.com/moxeed/store/catalog/catalog_model"
 	"github.com/moxeed/store/common"
 	"gorm.io/gorm"
 	"gorm.io/gorm/clause"
 )
 
-type CallBackModel struct {
-	ValidationCallBack string
-	CheckOutCallBack   string
-}
-
-type CreateProductModel struct {
-	Title              string
-	Price              uint
-	IsPermanent        bool
-	CategoryKey        string
-	CategoryTitle      string
-	ValidationCallBack string
-	CheckOutCallBack   string
-}
-
-type ProductModel struct {
-	ID            uint
-	Title         string
-	Price         uint
-	IsPermanent   bool
-	CategoryKey   string
-	CategoryTitle string
-}
-
-func CreateProduct(model CreateProductModel) ProductModel {
+func CreateProduct(model catalog_model.CreateProductModel) catalog_model.ProductModel {
 	category := Category{Key: model.CategoryKey}
 	result := common.DB.
 		Where(&category).
@@ -66,13 +43,13 @@ func GetProduct(id uint) (Product, error) {
 	return product, nil
 }
 
-func GetProductCallBacks(productIds []uint) map[uint]CallBackModel {
+func GetProductCallBacks(productIds []uint) map[uint]catalog_model.CallBackModel {
 	var products []Product
 	common.DB.Preload(clause.Associations).Find(&products, productIds)
 
-	result := make(map[uint]CallBackModel)
+	result := make(map[uint]catalog_model.CallBackModel)
 	for _, product := range products {
-		result[product.ID] = CallBackModel{
+		result[product.ID] = catalog_model.CallBackModel{
 			ValidationCallBack: product.Category.ValidationCallBack,
 			CheckOutCallBack:   product.Category.CheckOutCallBack,
 		}
@@ -81,8 +58,8 @@ func GetProductCallBacks(productIds []uint) map[uint]CallBackModel {
 	return result
 }
 
-func (p *Product) ToModel() ProductModel {
-	return ProductModel{
+func (p *Product) ToModel() catalog_model.ProductModel {
+	return catalog_model.ProductModel{
 		ID:            p.ID,
 		Title:         p.Title,
 		Price:         p.Price,

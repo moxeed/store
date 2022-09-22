@@ -3,40 +3,19 @@ package controller
 import (
 	"github.com/labstack/echo/v4"
 	"github.com/moxeed/store/common"
+	"github.com/moxeed/store/controller/controller_model"
 	"github.com/moxeed/store/ordering"
+	"github.com/moxeed/store/ordering/ordering_model"
 	"github.com/moxeed/store/payment"
 )
 
-type GetOrderModel struct {
-	ID            *uint   `query:"id"`
-	ReferenceCode *string `query:"referenceCode"`
-}
-
-type GetOrderListModel struct {
-	CustomerCode uint `query:"customerCode"`
-	Offset       int  `query:"offset"`
-}
-
-type GetBasketModel struct {
-	CustomerCode uint `query:"customerCode"`
-}
-
-type LockBasketModel struct {
-	CustomerCode uint `query:"customerCode"`
-}
-
-type PaymentModel struct {
-	Order      ordering.OrderModel
-	PaymentUrl string
-}
-
 func GetOrder(c echo.Context) (err error) {
-	model := GetOrderModel{}
+	model := controller_model.GetOrderModel{}
 	err = c.Bind(&model)
 
-	result := ordering.OrderModel{}
+	result := ordering_model.OrderModel{}
 
-	result, err = ordering.GetOrder(ordering.OrderIdentifier{
+	result, err = ordering.GetOrder(ordering_model.OrderIdentifier{
 		ID:            model.ID,
 		ReferenceCode: model.ReferenceCode,
 	})
@@ -46,13 +25,13 @@ func GetOrder(c echo.Context) (err error) {
 }
 
 func GetList(c echo.Context) (err error) {
-	model := GetOrderListModel{}
+	model := controller_model.GetOrderListModel{}
 	err = c.Bind(&model)
 
 	result, totalCount := ordering.GetOrderList(model.CustomerCode, model.Offset)
 
 	err = common.WriteIfNoError(&c, nil, struct {
-		Rows       []*ordering.OrderHeaderModel
+		Rows       []*ordering_model.OrderHeaderModel
 		TotalCount int64
 	}{
 		Rows:       result,
@@ -63,7 +42,7 @@ func GetList(c echo.Context) (err error) {
 }
 
 func GetBasket(c echo.Context) (err error) {
-	model := GetBasketModel{}
+	model := controller_model.GetBasketModel{}
 	err = c.Bind(&model)
 
 	result, err := ordering.GetBasket(model.CustomerCode)
@@ -72,7 +51,7 @@ func GetBasket(c echo.Context) (err error) {
 }
 
 func AddItem(c echo.Context) (err error) {
-	model := ordering.AddItemModel{}
+	model := ordering_model.AddItemModel{}
 	err = c.Bind(&model)
 
 	result, err := ordering.AddItem(model)
@@ -80,7 +59,7 @@ func AddItem(c echo.Context) (err error) {
 	return
 }
 
-func getPayment(order *ordering.OrderModel, isFree bool) (paymentModel PaymentModel, err error) {
+func getPayment(order *ordering_model.OrderModel, isFree bool) (paymentModel controller_model.PaymentModel, err error) {
 	paymentModel.Order = *order
 
 	if !isFree {
@@ -94,10 +73,10 @@ func getPayment(order *ordering.OrderModel, isFree bool) (paymentModel PaymentMo
 }
 
 func StartPayment(c echo.Context) (err error) {
-	model := GetOrderModel{}
+	model := controller_model.GetOrderModel{}
 	err = c.Bind(&model)
 
-	result, isFree, err := ordering.StartPayment(ordering.OrderIdentifier{
+	result, isFree, err := ordering.StartPayment(ordering_model.OrderIdentifier{
 		ID:            model.ID,
 		ReferenceCode: model.ReferenceCode,
 	})
@@ -108,7 +87,7 @@ func StartPayment(c echo.Context) (err error) {
 }
 
 func FlashBuy(c echo.Context) (err error) {
-	model := ordering.FlashBuyModel{}
+	model := ordering_model.FlashBuyModel{}
 	err = c.Bind(&model)
 
 	result, isFree, err := ordering.FlashBuy(model)

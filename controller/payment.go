@@ -2,19 +2,12 @@ package controller
 
 import (
 	"github.com/labstack/echo/v4"
+	"github.com/moxeed/store/controller/controller_model"
 	"github.com/moxeed/store/payment"
 )
 
-type OpenTerminalModel struct {
-	OrderCode uint `query:"orderCode"`
-}
-
-type VerifyModel struct {
-	Authority string `query:"Authority"`
-}
-
 func OpenTerminal(c echo.Context) (err error) {
-	model := OpenTerminalModel{}
+	model := controller_model.OpenTerminalModel{}
 	err = c.Bind(&model)
 
 	result, err := payment.OpenTerminal(model.OrderCode)
@@ -22,7 +15,7 @@ func OpenTerminal(c echo.Context) (err error) {
 }
 
 func Verify(c echo.Context) (err error) {
-	model := VerifyModel{}
+	model := controller_model.VerifyModel{}
 	err = c.Bind(&model)
 
 	result := payment.Verify(model.Authority)

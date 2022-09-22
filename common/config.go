@@ -24,6 +24,12 @@ type Config struct {
 		OpenOrderRetryInMinutes    time.Duration
 		OpenTerminalRetryInMinutes time.Duration
 	}
+	Store struct {
+		BaseUrl       string
+		CreateProduct string
+		AddItem       string
+		FlashBuy      string
+	}
 }
 
 var Configuration Config
