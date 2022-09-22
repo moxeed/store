@@ -77,6 +77,12 @@ func dispatchCheckout(orderItems []*OrderItem) {
 			if state.IsAmbiguous {
 				items[code].failedToProcess()
 			} else {
+				if !state.IsOk {
+					result = append(result, ErrorModel{
+						ReferenceCode: code,
+						Error:         "سرویس دهنده پاسخ مناسبی ارسال نکرد",
+					})
+				}
 				items[code].checkOut(&result)
 			}
 		}
