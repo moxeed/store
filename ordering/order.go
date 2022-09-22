@@ -92,8 +92,14 @@ func (o *Order) addItem(productCode uint, referenceCode uint, quantity uint) (er
 	return
 }
 
-func (o *Order) lockForPayment() bool {
+func (o *Order) lockForPayment() (bool, bool) {
 	isOk := o.validate()
+
+	if o.TotalAmount() == 0 {
+		o.setState(Paid)
+		o.dispatchCheckout()
+		return true, true
+	}
 
 	if isOk {
 
@@ -102,15 +108,10 @@ func (o *Order) lockForPayment() bool {
 			item.setState(PaymentPending)
 		}
 
-		if o.TotalAmount() == 0 {
-			o.setState(Paid)
-			o.dispatchCheckout()
-			return true
-		}
 		payment.CreatePayment(o.CustomerCode, o.ID, o.TotalAmount())
 	}
 
-	return isOk
+	return isOk, false
 }
 
 func (o *Order) checkOut() {

@@ -100,16 +100,20 @@ func AddItem(model AddItemModel) (orderModel OrderModel, err error) {
 	return
 }
 
-func LockForPayment(customerCode uint) (OrderModel, error) {
+func LockForPayment(customerCode uint) (OrderModel, bool, error) {
 	order, err := getBasket(customerCode)
 
 	if err != nil {
-		return order.toModel(), err
+		return order.toModel(), false, err
 	}
 
-	order.lockForPayment()
+	isOk, isFree := order.lockForPayment()
 	save(&order)
-	return order.toModel(), nil
+
+	if isOk {
+		return order.toModel(), isFree, nil
+	}
+	return order.toModel(), isFree, fmt.Errorf("امکان قفل کردن سفارش وجود ندارد")
 }
 
 func CheckOut(orderID uint) {

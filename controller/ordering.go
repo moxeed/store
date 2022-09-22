@@ -55,10 +55,10 @@ func LockForPayment(c echo.Context) (err error) {
 	model := LockBasketModel{}
 	err = c.Bind(&model)
 
-	result, err := ordering.LockForPayment(model.CustomerCode)
+	result, isFree, err := ordering.LockForPayment(model.CustomerCode)
 
 	var paymentResult string
-	if err == nil {
+	if err == nil && !isFree {
 		paymentResult, err = payment.OpenTerminal(result.ID)
 	}
 
