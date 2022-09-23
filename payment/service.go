@@ -31,7 +31,7 @@ func OpenTerminal(orderCode uint) (string, error) {
 	return common.Configuration.ZarinPal.RedirectUrl + terminalCode, err
 }
 
-func Verify(terminalCode string) error {
+func Verify(terminalCode string) (uint, error) {
 	terminal := Terminal{TerminalCode: terminalCode}
 	dbResult := common.DB.
 		Preload(clause.Associations).
@@ -39,13 +39,13 @@ func Verify(terminalCode string) error {
 		Where(&terminal).First(&terminal)
 
 	if dbResult.Error == gorm.ErrRecordNotFound {
-		return fmt.Errorf("درگاه پیدا نشد")
+		return 0, fmt.Errorf("درگاه پیدا نشد")
 	}
 
 	result := terminal.verify()
 
 	if !result {
-		return fmt.Errorf("پرداخت معتبر نمی باشد")
+		return terminal.OrderPayment.OrderCode, fmt.Errorf("پرداخت معتبر نمی باشد")
 	}
 
 	common.DB.Save(&terminal)
@@ -61,7 +61,7 @@ func Verify(terminalCode string) error {
 		})
 	}
 
-	return nil
+	return terminal.OrderPayment.OrderCode, nil
 }
 
 func IsPaid(orderCode uint) payment_model.InquiryModel {

@@ -30,6 +30,9 @@ type Config struct {
 		AddItem       string
 		FlashBuy      string
 	}
+	Front struct {
+		PaymentRedirect string
+	}
 }
 
 var Configuration Config

@@ -1,5 +1,5 @@
 {
-  "databaseDsn": "sqlserver://Golang:UFy2fjDoUe9igCC2rnRv@37.130.202.59:1433?database=Store",
+  "databaseDsn": "sqlserver://sa:1qaz@WSX@localhost:1433?database=Store",
   "listenPort": 8091,
   "title": "store",
   "schemes": [
@@ -20,5 +20,8 @@
     "failedOrderRetryInMinutes": 15,
     "openOrderRetryInMinutes": 15,
     "openTerminalRetryInMinutes": 15
+  },
+  "front": {
+    "paymentRedirect": "https://bartarha.net/v2/store/payment/"
   }
 }

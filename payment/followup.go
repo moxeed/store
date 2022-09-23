@@ -15,7 +15,7 @@ func pollingOpenPaymentFollowUp() {
 		Find(&terminals)
 
 	for _, terminal := range terminals {
-		err := Verify(terminal.TerminalCode)
+		_, err := Verify(terminal.TerminalCode)
 		common.Log(err)
 	}
 
