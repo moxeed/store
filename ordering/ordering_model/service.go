@@ -14,7 +14,7 @@ type StateModel struct {
 }
 
 type OrderModel struct {
-	ID             uint             `json:"ID,omitempty"`
+	ID             uint             `json:"id,omitempty"`
 	UserCode       uint             `json:"userCode,omitempty"`
 	CustomerCode   uint             `json:"customerCode,omitempty"`
 	LastState      int              `json:"lastState,omitempty"`
@@ -26,7 +26,7 @@ type OrderModel struct {
 }
 
 type OrderHeaderModel struct {
-	ID             uint         `json:"ID,omitempty"`
+	ID             uint         `json:"id,omitempty"`
 	UserCode       uint         `json:"userCode,omitempty"`
 	CustomerCode   uint         `json:"customerCode,omitempty"`
 	LastState      int          `json:"lastState,omitempty"`
@@ -37,7 +37,7 @@ type OrderHeaderModel struct {
 }
 
 type OrderItemModel struct {
-	ID                   uint         `json:"ID,omitempty"`
+	ID                   uint         `json:"id,omitempty"`
 	ProductTitle         string       `json:"productTitle,omitempty"`
 	Category             string       `json:"category,omitempty"`
 	ProductCode          uint         `json:"productCode,omitempty"`

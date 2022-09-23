@@ -17,7 +17,7 @@ type CreateProductModel struct {
 }
 
 type ProductModel struct {
-	ID            uint `json:"ID,omitempty"`
+	ID            uint `json:"id,omitempty"`
 	ReferenceCode uint
 	Title         string `json:"title,omitempty"`
 	Price         uint   `json:"price,omitempty"`

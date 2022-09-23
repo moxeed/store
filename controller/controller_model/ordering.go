@@ -21,6 +21,6 @@ type LockBasketModel struct {
 }
 
 type PaymentModel struct {
-	Order      ordering_model.OrderModel
-	PaymentUrl string
+	Order      ordering_model.OrderModel `json:"order"`
+	PaymentUrl string                    `json:"paymentUrl,omitempty"`
 }
