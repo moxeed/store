@@ -23,5 +23,5 @@ func Verify(c echo.Context) (err error) {
 
 	orderCode, verifyErr := payment.Verify(model.Authority)
 	return c.Redirect(http.StatusFound, common.Configuration.Front.PaymentRedirect+
-		fmt.Sprintf("%d?error=%s", orderCode, verifyErr.Error()))
+		fmt.Sprintf("%d?error=%v", orderCode, verifyErr))
 }

@@ -42,23 +42,22 @@ func Verify(terminalCode string) (uint, error) {
 		return 0, fmt.Errorf("درگاه پیدا نشد")
 	}
 
-	if terminal.LastState == Paid {
-		return terminal.OrderPayment.OrderCode, nil
-	}
-
 	if terminal.LastState == Failed {
 		return terminal.OrderPayment.OrderCode, fmt.Errorf("پرداخت معتبر نمی باشد")
 	}
 
-	result := terminal.verify()
+	if terminal.LastState == Open {
+		result := terminal.verify()
 
-	if !result {
-		return terminal.OrderPayment.OrderCode, fmt.Errorf("پرداخت معتبر نمی باشد")
-	}
+		if !result {
+			return terminal.OrderPayment.OrderCode, fmt.Errorf("پرداخت معتبر نمی باشد")
+		}
 
-	common.DB.Save(&terminal)
-	if terminal.OrderPayment != nil {
-		common.DB.Save(terminal.OrderPayment)
+		common.DB.Save(&terminal)
+
+		if terminal.OrderPayment != nil {
+			common.DB.Save(terminal.OrderPayment)
+		}
 	}
 
 	if terminal.OrderPaymentID != nil {
