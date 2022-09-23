@@ -112,13 +112,6 @@ func (t *Terminal) verify() bool {
 	}
 
 	result := verify(t.TerminalCode, t.Amount)
-	//result := VerifyResult{
-	//	isRepeated:    false,
-	//	isOk:          true,
-	//	CardPan:       "8912392*****72823",
-	//	ReferenceCode: "1239223",
-	//	Fee:           0,
-	//}
 
 	if !result.isOk && !result.isRepeated {
 		t.setState(Failed)

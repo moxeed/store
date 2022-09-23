@@ -42,6 +42,14 @@ func Verify(terminalCode string) (uint, error) {
 		return 0, fmt.Errorf("درگاه پیدا نشد")
 	}
 
+	if terminal.LastState == Paid {
+		return terminal.OrderPayment.OrderCode, nil
+	}
+
+	if terminal.LastState == Failed {
+		return terminal.OrderPayment.OrderCode, fmt.Errorf("پرداخت معتبر نمی باشد")
+	}
+
 	result := terminal.verify()
 
 	if !result {
