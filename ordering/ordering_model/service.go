@@ -3,65 +3,66 @@ package ordering_model
 import "time"
 
 type OrderIdentifier struct {
-	ID            *uint
-	ReferenceCode *string
+	ID            *uint   `json:"id,omitempty"`
+	ReferenceCode *string `json:"referenceCode,omitempty"`
 }
 
 type StateModel struct {
-	State      int
-	StateTitle string
-	CreatedAt  time.Time
+	State      int       `json:"state,omitempty"`
+	StateTitle string    `json:"stateTitle,omitempty"`
+	CreatedAt  time.Time `json:"createdAt"`
 }
 
 type OrderModel struct {
-	ID             uint
-	UserCode       uint
-	CustomerCode   uint
-	LastState      int
-	LastStateTitle string
-	TotalAmount    uint
-	Items          []OrderItemModel
-	States         []StateModel
-	CreatedAt      time.Time
+	ID             uint             `json:"ID,omitempty"`
+	UserCode       uint             `json:"userCode,omitempty"`
+	CustomerCode   uint             `json:"customerCode,omitempty"`
+	LastState      int              `json:"lastState,omitempty"`
+	LastStateTitle string           `json:"lastStateTitle,omitempty"`
+	TotalAmount    uint             `json:"totalAmount,omitempty"`
+	Items          []OrderItemModel `json:"items,omitempty"`
+	States         []StateModel     `json:"states,omitempty"`
+	CreatedAt      time.Time        `json:"createdAt"`
 }
 
 type OrderHeaderModel struct {
-	ID             uint
-	UserCode       uint
-	CustomerCode   uint
-	LastState      int
-	LastStateTitle string
-	TotalAmount    uint
-	States         []StateModel
-	CreatedAt      time.Time
+	ID             uint         `json:"ID,omitempty"`
+	UserCode       uint         `json:"userCode,omitempty"`
+	CustomerCode   uint         `json:"customerCode,omitempty"`
+	LastState      int          `json:"lastState,omitempty"`
+	LastStateTitle string       `json:"lastStateTitle,omitempty"`
+	TotalAmount    uint         `json:"totalAmount,omitempty"`
+	States         []StateModel `json:"states,omitempty"`
+	CreatedAt      time.Time    `json:"createdAt"`
 }
 
 type OrderItemModel struct {
-	ID             uint
-	ProductTitle   string
-	Category       string
-	ProductCode    uint
-	Price          uint
-	Quantity       uint
-	LastState      int
-	LastStateTitle string
-	Errors         []string
-	States         []StateModel
+	ID                   uint         `json:"ID,omitempty"`
+	ProductTitle         string       `json:"productTitle,omitempty"`
+	Category             string       `json:"category,omitempty"`
+	ProductCode          uint         `json:"productCode,omitempty"`
+	ReferenceProductCode uint         `json:"referenceProductCode,omitempty"`
+	Price                uint         `json:"price,omitempty"`
+	Quantity             uint         `json:"quantity,omitempty"`
+	LastState            int          `json:"lastState,omitempty"`
+	LastStateTitle       string       `json:"lastStateTitle,omitempty"`
+	Errors               []string     `json:"errors,omitempty"`
+	States               []StateModel `json:"states,omitempty"`
 }
 
 type AddItemModel struct {
-	UserCode      uint
-	CustomerCode  uint
-	ProductCode   uint
-	ReferenceCode uint
-	Quantity      uint
+	UserCode      uint `json:"userCode,omitempty"`
+	CustomerCode  uint `json:"customerCode,omitempty"`
+	ProductCode   uint `json:"productCode,omitempty"`
+	ReferenceCode uint `json:"referenceCode,omitempty"`
+	Quantity      uint `json:"quantity,omitempty"`
 }
 
 type FlashBuyModel struct {
-	UserCode           uint
-	CustomerCode       uint
-	ProductCode        uint
-	ReferenceCode      uint
-	Quantity           uint
-	OrderReferenceCode string
+	UserCode           uint   `json:"userCode,omitempty"`
+	CustomerCode       uint   `json:"customerCode,omitempty"`
+	ProductCode        uint   `json:"productCode,omitempty"`
+	ReferenceCode      uint   `json:"referenceCode,omitempty"`
+	Quantity           uint   `json:"quantity,omitempty"`
+	OrderReferenceCode string `json:"orderReferenceCode,omitempty"`
 }

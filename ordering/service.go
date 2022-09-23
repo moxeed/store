@@ -2,6 +2,8 @@ package ordering
 
 import (
 	"fmt"
+	"github.com/moxeed/store/catalog"
+	"github.com/moxeed/store/catalog/catalog_model"
 	"github.com/moxeed/store/common"
 	"github.com/moxeed/store/ordering/ordering_model"
 	"gorm.io/gorm"
@@ -192,7 +194,7 @@ func (ois *OrderItemState) toModel() ordering_model.StateModel {
 	}
 }
 
-func (oi *OrderItem) toModel() ordering_model.OrderItemModel {
+func (oi *OrderItem) toModel(p catalog_model.ProductModel) ordering_model.OrderItemModel {
 	var errors []string
 	var states []ordering_model.StateModel
 
@@ -205,25 +207,33 @@ func (oi *OrderItem) toModel() ordering_model.OrderItemModel {
 	}
 
 	return ordering_model.OrderItemModel{
-		ID:             oi.ID,
-		ProductTitle:   oi.ProductTitle,
-		Category:       oi.Category,
-		ProductCode:    oi.ProductCode,
-		Price:          oi.Price,
-		Quantity:       oi.Quantity,
-		LastState:      oi.LastState,
-		LastStateTitle: stateText(oi.LastState),
-		Errors:         errors,
-		States:         states,
+		ID:                   oi.ID,
+		ProductTitle:         oi.ProductTitle,
+		Category:             oi.Category,
+		ProductCode:          oi.ProductCode,
+		ReferenceProductCode: p.ReferenceCode,
+		Price:                oi.Price,
+		Quantity:             oi.Quantity,
+		LastState:            oi.LastState,
+		LastStateTitle:       stateText(oi.LastState),
+		Errors:               errors,
+		States:               states,
 	}
 }
 
 func (o *Order) toModel() ordering_model.OrderModel {
 	var items []ordering_model.OrderItemModel
 	var states []ordering_model.StateModel
+	productCodes := make([]uint, 0)
 
 	for _, item := range o.Items {
-		items = append(items, item.toModel())
+		productCodes = append(productCodes, item.ProductCode)
+	}
+
+	products := catalog.GetProductInfo(productCodes)
+
+	for _, item := range o.Items {
+		items = append(items, item.toModel(products[item.ProductCode]))
 	}
 
 	for _, state := range o.States {

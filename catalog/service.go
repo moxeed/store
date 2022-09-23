@@ -21,10 +21,11 @@ func CreateProduct(model catalog_model.CreateProductModel) catalog_model.Product
 	}
 
 	product := Product{
-		Title:       model.Title,
-		Price:       model.Price,
-		IsPermanent: model.IsPermanent,
-		Category:    category,
+		ReferenceCode: model.ReferenceCode,
+		Title:         model.Title,
+		Price:         model.Price,
+		IsPermanent:   model.IsPermanent,
+		Category:      category,
 	}
 
 	common.DB.Create(&product)
@@ -41,6 +42,18 @@ func GetProduct(id uint) (Product, error) {
 	}
 
 	return product, nil
+}
+
+func GetProductInfo(productIds []uint) map[uint]catalog_model.ProductModel {
+	var products []Product
+	common.DB.Preload(clause.Associations).Find(&products, productIds)
+
+	result := make(map[uint]catalog_model.ProductModel)
+	for _, product := range products {
+		result[product.ID] = product.ToModel()
+	}
+
+	return result
 }
 
 func GetProductCallBacks(productIds []uint) map[uint]catalog_model.CallBackModel {
@@ -61,6 +74,7 @@ func GetProductCallBacks(productIds []uint) map[uint]catalog_model.CallBackModel
 func (p *Product) ToModel() catalog_model.ProductModel {
 	return catalog_model.ProductModel{
 		ID:            p.ID,
+		ReferenceCode: p.ReferenceCode,
 		Title:         p.Title,
 		Price:         p.Price,
 		IsPermanent:   p.IsPermanent,

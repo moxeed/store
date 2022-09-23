@@ -15,11 +15,12 @@ type Category struct {
 
 type Product struct {
 	gorm.Model
-	Title       string
-	Price       uint
-	IsPermanent bool
-	CategoryID  uint
-	Category    Category
+	ReferenceCode uint
+	Title         string
+	Price         uint
+	IsPermanent   bool
+	CategoryID    uint
+	Category      Category
 }
 
 func init() {
