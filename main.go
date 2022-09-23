@@ -5,9 +5,14 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/moxeed/store/common"
 	"github.com/moxeed/store/controller"
+	"github.com/nullseed/logruseq"
+	"github.com/sirupsen/logrus"
 )
 
 func main() {
+
+	logrus.AddHook(logruseq.NewSeqHook(common.Configuration.Seq.Url,
+		logruseq.OptionAPIKey(common.Configuration.Seq.ApiKey)))
 	router := echo.New()
 
 	product := router.Group("/product")

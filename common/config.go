@@ -33,6 +33,10 @@ type Config struct {
 	Front struct {
 		PaymentRedirect string
 	}
+	Seq struct {
+		Url    string
+		ApiKey string
+	}
 }
 
 var Configuration Config

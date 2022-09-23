@@ -23,5 +23,9 @@
   },
   "front": {
     "paymentRedirect": "https://bartarha.net/v2/store/payment/"
+  },
+  "seq": {
+    "url": "http://localhost:5341",
+    "apiKey": "FGYZhtJKi4ez9EdPOjB0"
   }
 }

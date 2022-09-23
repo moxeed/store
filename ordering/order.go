@@ -4,6 +4,7 @@ import (
 	"github.com/moxeed/store/catalog"
 	"github.com/moxeed/store/common"
 	"github.com/moxeed/store/payment"
+	"github.com/sirupsen/logrus"
 	"gorm.io/gorm"
 	"time"
 )
@@ -120,6 +121,14 @@ func (o *Order) lockForPayment() bool {
 }
 
 func (o *Order) checkOut() {
+
+	if o.LastState == Paid {
+		logrus.WithFields(map[string]interface{}{
+			"orderId": o.ID,
+		}).Warn("Repeated CheckOut")
+		return
+	}
+
 	if !o.IsFree() {
 		inquiry := payment.IsPaid(o.ID)
 
