@@ -62,7 +62,7 @@ func AddItem(c echo.Context) (err error) {
 func getPayment(order *ordering_model.OrderModel, isFree bool, prevError error) (paymentModel controller_model.PaymentModel, err error) {
 	paymentModel.Order = *order
 
-	if !isFree && prevError == nil {
+	if !isFree && order.LastState == ordering.PaymentPending && prevError == nil {
 		var paymentResult string
 		paymentResult, err = payment.OpenTerminal(order.ID)
 
