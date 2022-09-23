@@ -90,14 +90,18 @@ func AddItem(model ordering_model.AddItemModel) (orderModel ordering_model.Order
 
 func StartPayment(identifier ordering_model.OrderIdentifier) (orderModel ordering_model.OrderModel, isFree bool, err error) {
 	order, err := getOrderByIdentifier(identifier)
+	isFree = false
 
 	if err != nil {
-		return order.toModel(), false, err
+		return
 	}
+
+	orderModel = order.toModel()
+	isFree = order.IsFree()
 
 	order.lockForPayment()
 	save(&order)
-	return order.toModel(), order.IsFree(), nil
+	return
 }
 
 func FlashBuy(model ordering_model.FlashBuyModel) (orderModel ordering_model.OrderModel, isFree bool, err error) {
