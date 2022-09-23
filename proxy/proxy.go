@@ -51,7 +51,7 @@ func FlashBuy(model ordering_model.FlashBuyModel) (*controller_model.PaymentMode
 func StartPayment(model controller_model.GetOrderModel) (*controller_model.PaymentModel, error) {
 	config := &common.Configuration.Store
 	result := &controller_model.PaymentModel{}
-	state := common.Post(config.BaseUrl+config.FlashBuy, model, result)
+	state := common.Post(config.BaseUrl+config.StartPayment, model, result)
 
 	if state.IsOk {
 		return result, nil

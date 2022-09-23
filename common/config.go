@@ -29,6 +29,7 @@ type Config struct {
 		CreateProduct string
 		AddItem       string
 		FlashBuy      string
+		StartPayment  string
 	}
 	Front struct {
 		PaymentRedirect string
